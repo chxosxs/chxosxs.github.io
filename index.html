@@ -1,214 +1,94 @@
-// ==== index.html ====
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Homework Share</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f9fafb;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .subject-tabs button {
+      margin: 0 5px;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 5px;
+      background: #e2e8f0;
+      cursor: pointer;
+    }
+
+    .subject-tabs .active {
+      background: #3b82f6;
+      color: white;
+    }
+
+    textarea, input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+    }
+
+    button.submit-btn {
+      background: #10b981;
+      color: white;
+      padding: 10px;
+      border: none;
+      width: 100%;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button.like-btn {
+      background: transparent;
+      border: none;
+      color: #ef4444;
+      cursor: pointer;
+    }
+
+    .comment-box {
+      margin-top: 10px;
+    }
+
+    .login-area {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+  </style>
 </head>
 <body>
   <div id="app"></div>
-  <script src="app.js"></script>
-</body>
-</html>
+  <script>
+    const app = document.getElementById('app');
 
+    let posts = [];
+    let currentUser = null;
 
-// ==== style.css ====
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #f9fafb;
-  margin: 0;
-  padding: 0;
-}
-
-.container {
-  max-width: 800px;
-  margin: auto;
-  padding: 20px;
-}
-
-header {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.card {
-  background: white;
-  padding: 15px;
-  margin: 10px 0;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.subject-tabs button {
-  margin: 0 5px;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 5px;
-  background: #e2e8f0;
-  cursor: pointer;
-}
-
-.subject-tabs .active {
-  background: #3b82f6;
-  color: white;
-}
-
-textarea, input {
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
-}
-
-button.submit-btn {
-  background: #10b981;
-  color: white;
-  padding: 10px;
-  border: none;
-  width: 100%;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-button.like-btn {
-  background: transparent;
-  border: none;
-  color: #ef4444;
-  cursor: pointer;
-}
-
-.comment-box {
-  margin-top: 10px;
-}
-
-.login-area {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-
-// ==== app.js ====
-const app = document.getElementById('app');
-
-let posts = [];
-let currentUser = null;
-
-function render() {
-  app.innerHTML = '';
-
-  const container = document.createElement('div');
-  container.className = 'container';
-
-  // Header
-  const header = document.createElement('header');
-  header.innerHTML = `<h1>📘 แชร์การบ้าน & ติวกันเถอะ!</h1>`;
-
-  // Login area
-  const loginArea = document.createElement('div');
-  loginArea.className = 'login-area';
-  if (currentUser) {
-    loginArea.innerHTML = `👋 ยินดีต้อนรับ, ${currentUser} <button onclick="logout()">ออกจากระบบ</button>`;
-  } else {
-    loginArea.innerHTML = `
-      <input id="username" placeholder="ใส่ชื่อผู้ใช้">
-      <button onclick="login()">เข้าสู่ระบบ</button>
-    `;
-  }
-
-  container.appendChild(header);
-  container.appendChild(loginArea);
-
-  if (currentUser) {
-    // Subject Tabs
-    const subjects = ['ทั่วไป', 'คณิต', 'วิทย์', 'อังกฤษ', 'สังคม'];
-    const tabContainer = document.createElement('div');
-    tabContainer.className = 'subject-tabs';
-    let selectedSubject = 'ทั่วไป';
-
-    subjects.forEach((s) => {
-      const btn = document.createElement('button');
-      btn.textContent = s;
-      btn.className = s === selectedSubject ? 'active' : '';
-      btn.onclick = () => {
-        selectedSubject = s;
-        render();
-      };
-      tabContainer.appendChild(btn);
-    });
-
-    container.appendChild(tabContainer);
-
-    // Input form
-    const textarea = document.createElement('textarea');
-    textarea.placeholder = 'เขียนการบ้านหรือติวที่นี่...';
-    textarea.id = 'postContent';
-
-    const submitBtn = document.createElement('button');
-    submitBtn.textContent = 'โพสต์การบ้าน';
-    submitBtn.className = 'submit-btn';
-    submitBtn.onclick = () => {
-      const content = textarea.value.trim();
-      if (content) {
-        posts.unshift({ subject: selectedSubject, content, user: currentUser, timestamp: new Date().toLocaleString(), likes: 0, comments: [] });
-        textarea.value = '';
-        render();
-      }
-    };
-
-    container.appendChild(textarea);
-    container.appendChild(submitBtn);
-  }
-
-  // Post list
-  posts.forEach((p, i) => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `
-      <div><strong>${p.user}</strong> | ${p.timestamp} | <em>${p.subject}</em></div>
-      <div style="margin: 10px 0;">${p.content}</div>
-      <div>
-        ❤️ ${p.likes} <button class="like-btn" onclick="likePost(${i})">ไลก์</button>
-      </div>
-      <div class="comment-box">
-        💬 ความคิดเห็น:
-        <ul>${p.comments.map(c => `<li>${c}</li>`).join('')}</ul>
-        <input placeholder="เขียนความคิดเห็น..." onkeydown="if(event.key==='Enter'){addComment(${i}, this.value); this.value='';}">
-      </div>
-    `;
-    container.appendChild(card);
-  });
-
-  app.appendChild(container);
-}
-
-function login() {
-  const username = document.getElementById('username').value.trim();
-  if (username) {
-    currentUser = username;
-    render();
-  }
-}
-
-function logout() {
-  currentUser = null;
-  render();
-}
-
-function likePost(index) {
-  posts[index].likes++;
-  render();
-}
-
-function addComment(index, comment) {
-  if (comment.trim()) {
-    posts[index].comments.push(`${currentUser}: ${comment.trim()}`);
-    render();
-  }
-}
-
-render();
+    function render() {
+      app.innerHTML = '';
