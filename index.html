@@ -112,7 +112,7 @@
   <script>
     let posts = JSON.parse(localStorage.getItem('posts')) || [];
     let currentUser = localStorage.getItem('currentUser') || null;
-    let selectedSubject = 'ทั่วไป';
+    let selectedSubject = localStorage.getItem('selectedSubject') || 'ทั่วไป';
 
     function notify(msg) {
       const box = document.getElementById('notifyBox');
@@ -123,6 +123,7 @@
     function save() {
       localStorage.setItem('posts', JSON.stringify(posts));
       localStorage.setItem('currentUser', currentUser || '');
+      localStorage.setItem('selectedSubject', selectedSubject);
     }
 
     function renderLogin() {
@@ -166,6 +167,7 @@
 
     function selectSubject(subj) {
       selectedSubject = subj;
+      save();
       renderAll();
     }
 
