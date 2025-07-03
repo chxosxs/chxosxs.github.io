@@ -95,6 +95,14 @@
       border-radius: 6px;
       margin-bottom: 1rem;
     }
+
+    .section-title {
+      margin-top: 2rem;
+      font-weight: bold;
+      font-size: 1.25rem;
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 0.25rem;
+    }
   </style>
 </head>
 <body>
@@ -216,22 +224,28 @@
 
     function renderPosts() {
       const el = document.getElementById('posts');
-      el.innerHTML = posts
-        .map(
-          (p, i) => `
-        <div class="card">
-          <div><strong>${p.user}</strong> | ${p.timestamp} | <em>${p.subject}</em></div>
-          <p style="margin: 10px 0;">${p.content}</p>
-          <div>❤️ ${p.likes} <button onclick="likePost(${i})">ไลก์</button></div>
-          <div class="comment-box">
-            💬 ความคิดเห็น:
-            <ul>${p.comments.map((c) => `<li>${c}</li>`).join('')}</ul>
-            <input placeholder="เพิ่มความคิดเห็น..." onkeydown="if(event.key==='Enter'){addComment(${i}, this)}">
-          </div>
-        </div>
-      `
-        )
-        .join('');
+      el.innerHTML = '';
+      const subjects = ['ทั่วไป', 'คณิต', 'วิทย์', 'อังกฤษ', 'สังคม'];
+      subjects.forEach(subject => {
+        const filtered = posts.filter(p => p.subject === subject);
+        if (filtered.length > 0) {
+          el.innerHTML += `<div class="section-title">${subject}</div>`;
+          filtered.forEach((p, i) => {
+            el.innerHTML += `
+              <div class="card">
+                <div><strong>${p.user}</strong> | ${p.timestamp} | <em>${p.subject}</em></div>
+                <p style="margin: 10px 0;">${p.content}</p>
+                <div>❤️ ${p.likes} <button onclick="likePost(${posts.indexOf(p)})">ไลก์</button></div>
+                <div class="comment-box">
+                  💬 ความคิดเห็น:
+                  <ul>${p.comments.map((c) => `<li>${c}</li>`).join('')}</ul>
+                  <input placeholder="เพิ่มความคิดเห็น..." onkeydown="if(event.key==='Enter'){addComment(${posts.indexOf(p)}, this)}">
+                </div>
+              </div>
+            `;
+          });
+        }
+      });
     }
 
     function renderAll() {
