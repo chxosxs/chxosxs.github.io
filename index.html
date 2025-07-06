@@ -76,14 +76,14 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
     import { getDatabase, ref, push, onValue, set } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, browserPopupRedirectResolver } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+    import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDsv1CFdagjEBwe6WZIIQEbugG7Q5-t9vs",
-      authDomain: "your-project-id.firebaseapp.com",
-      databaseURL: "https://your-project-id.firebaseio.com",
-      projectId: "your-project-id",
-      storageBucket: "your-project-id.appspot.com",
+      authDomain: "chxos.firebaseapp.com",
+      databaseURL: "https://chxos-default-rtdb.firebaseio.com",
+      projectId: "chxos",
+      storageBucket: "chxos.appspot.com",
       messagingSenderId: "your-messaging-sender-id",
       appId: "your-app-id"
     };
@@ -97,12 +97,18 @@
     let selectedSubject = 'ทั่วไป';
 
     window.login = () => {
-      signInWithPopup(auth, provider, browserPopupRedirectResolver)
-        .catch(error => {
-          console.error('Login error', error);
-          alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบ: ' + error.message);
-        });
+      signInWithRedirect(auth, provider);
     };
+
+    getRedirectResult(auth).then((result) => {
+      if (result && result.user) {
+        currentUser = result.user;
+        renderAll();
+      }
+    }).catch(error => {
+      console.error('Login error', error);
+      alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบ: ' + error.message);
+    });
 
     window.logout = () => signOut(auth);
 
