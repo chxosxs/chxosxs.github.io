@@ -1,109 +1,193 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Homework Share Pro</title>
   <style>
-    :root {
-      --primary: #3b82f6;
-      --success: #10b981;
-      --danger: #ef4444;
-      --gray: #f3f4f6;
-      --border: #d1d5db;
-    }
-
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: var(--gray);
+      background-color: #f0f4f8;
       margin: 0;
       padding: 0;
     }
-
     .container {
       max-width: 800px;
-      margin: auto;
-      padding: 1rem;
+      margin: 0 auto;
+      padding: 2rem;
     }
-
     header {
       text-align: center;
-      margin-bottom: 1rem;
+      margin-bottom: 2rem;
     }
-
     .card {
-      background: white;
+      background: #fff;
+      border-radius: 12px;
       padding: 1rem;
       margin: 1rem 0;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
     }
-
-    .tabs button {
-      margin: 0.25rem;
-      padding: 0.5rem 1rem;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: white;
-      cursor: pointer;
-    }
-
-    .tabs .active {
-      background: var(--primary);
-      color: white;
-    }
-
-    textarea, input[type="text"], select {
+    input, textarea, select, button {
       width: 100%;
       padding: 0.75rem;
-      margin-top: 0.5rem;
-      margin-bottom: 1rem;
+      margin: 0.5rem 0;
       border-radius: 8px;
-      border: 1px solid var(--border);
-      box-sizing: border-box;
+      border: 1px solid #ccc;
+      font-size: 1rem;
     }
-
-    button.submit {
-      background: var(--success);
+    button {
+      background-color: #10b981;
       color: white;
-      padding: 0.75rem;
       border: none;
-      width: 100%;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #059669;
+    }
+    .tabs button {
+      width: auto;
+      padding: 0.5rem 1rem;
+      margin: 0.25rem;
+      border: 1px solid #ccc;
+      background: white;
       border-radius: 8px;
       cursor: pointer;
     }
-
-    .comment-box {
-      margin-top: 0.75rem;
+    .tabs .active {
+      background-color: #3b82f6;
+      color: white;
+      border: none;
     }
-
-    .comment-box input {
-      margin-top: 0.25rem;
-    }
-
     .topbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1rem;
     }
-
-    .notify {
-      background: #fef3c7;
-      border-left: 4px solid #facc15;
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      margin-bottom: 1rem;
-    }
-
-    .section-title {
-      margin-top: 2rem;
-      font-weight: bold;
-      font-size: 1.25rem;
-      border-bottom: 2px solid var(--primary);
-      padding-bottom: 0.25rem;
-    }
   </style>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { getDatabase, ref, push, onValue, set } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDsv1CFdagjEBwe6WZIIQEbugG7Q5-t9vs",
+      authDomain: "chxos-c5bb3.firebaseapp.com",
+      databaseURL: "https://chxos-c5bb3-default-rtdb.firebaseio.com",
+      projectId: "chxos-c5bb3",
+      storageBucket: "chxos-c5bb3.firebasestorage.app",
+      messagingSenderId: "1087169428011",
+      appId: "1:1087169428011:web:0c8ce9419baa7b15abc86e"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    let currentUser = null;
+    let selectedSubject = 'ทั่วไป';
+
+    function renderLogin(user) {
+      const area = document.getElementById('loginArea');
+      if (user) {
+        area.innerHTML = `👋 ยินดีต้อนรับ, ${user.displayName} <button onclick="logout()">ออกจากระบบ</button>`;
+      } else {
+        area.innerHTML = `<button onclick="login()">เข้าสู่ระบบด้วย Google</button>`;
+      }
+    }
+
+    window.login = () => signInWithPopup(auth, provider);
+    window.logout = () => signOut(auth);
+
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+      renderAll();
+    });
+
+    window.selectSubject = (subject) => {
+      selectedSubject = subject;
+      renderAll();
+    };
+
+    window.addPost = () => {
+      const content = document.getElementById('postContent').value.trim();
+      if (!currentUser || !content) return;
+      push(ref(db, 'posts'), {
+        content,
+        subject: selectedSubject,
+        user: currentUser.displayName,
+        uid: currentUser.uid,
+        timestamp: new Date().toLocaleString(),
+        createdAt: Date.now(),
+        likes: 0,
+        comments: []
+      });
+      document.getElementById('postContent').value = '';
+    };
+
+    window.likePost = (key, currentLikes) => {
+      set(ref(db, `posts/${key}/likes`), currentLikes + 1);
+    };
+
+    window.addComment = (key, input) => {
+      const text = input.value.trim();
+      if (!text || !currentUser) return;
+      const postRef = ref(db, `posts/${key}/comments`);
+      onValue(postRef, (snapshot) => {
+        const comments = snapshot.val() || [];
+        comments.push(`${currentUser.displayName}: ${text}`);
+        set(postRef, comments);
+        input.value = '';
+      }, { onlyOnce: true });
+    };
+
+    function renderAll() {
+      renderLogin(currentUser);
+      renderTabs();
+      renderForm();
+      renderPosts();
+    }
+
+    function renderTabs() {
+      const el = document.getElementById('tabs');
+      const subjects = ['ทั่วไป', 'คณิต', 'วิทย์', 'อังกฤษ', 'สังคม'];
+      el.innerHTML = `<div class="tabs">${subjects.map(s => `<button class="${s === selectedSubject ? 'active' : ''}" onclick="selectSubject('${s}')">${s}</button>`).join('')}</div>`;
+    }
+
+    function renderForm() {
+      const el = document.getElementById('formArea');
+      if (!currentUser) return el.innerHTML = '';
+      el.innerHTML = `
+        <textarea id="postContent" placeholder="โพสต์การบ้านของคุณ..."></textarea>
+        <button onclick="addPost()">โพสต์เลย!</button>
+      `;
+    }
+
+    function renderPosts() {
+      const el = document.getElementById('posts');
+      onValue(ref(db, 'posts'), (snapshot) => {
+        const data = snapshot.val();
+        const arr = data ? Object.entries(data) : [];
+        const filtered = arr.filter(([_, p]) => p.subject === selectedSubject);
+        filtered.sort((a, b) => b[1].createdAt - a[1].createdAt);
+
+        el.innerHTML = filtered.map(([key, p]) => `
+          <div class="card">
+            <div><strong>${p.user}</strong> | ${p.timestamp} | <em>${p.subject}</em></div>
+            <p>${p.content}</p>
+            <div>❤️ ${p.likes || 0} <button onclick="likePost('${key}', ${p.likes || 0})">ไลก์</button></div>
+            <div class="comment-box">
+              💬 ความคิดเห็น:
+              <ul>${(p.comments || []).map(c => `<li>${c}</li>`).join('')}</ul>
+              <input placeholder="เพิ่มความคิดเห็น..." onkeydown="if(event.key==='Enter'){addComment('${key}', this)}">
+            </div>
+          </div>
+        `).join('');
+      });
+    }
+  </script>
 </head>
 <body>
   <div class="container">
@@ -111,164 +195,9 @@
       <h1>📘 แชร์การบ้าน & ติวกันเถอะ!</h1>
     </header>
     <div class="topbar" id="loginArea"></div>
-    <div id="notifyBox"></div>
     <div id="tabs"></div>
     <div id="formArea"></div>
-    <select id="sortBy" onchange="renderPosts()">
-      <option value="date">เรียงตามวันที่</option>
-      <option value="likes">เรียงตามยอดไลก์</option>
-      <option value="user">เรียงตามชื่อผู้ใช้</option>
-    </select>
     <div id="posts"></div>
   </div>
-
-  <script>
-    let posts = JSON.parse(localStorage.getItem('posts')) || [];
-    let currentUser = localStorage.getItem('currentUser') || null;
-    let selectedSubject = localStorage.getItem('selectedSubject') || 'ทั่วไป';
-
-    function notify(msg) {
-      const box = document.getElementById('notifyBox');
-      box.innerHTML = `<div class="notify">🔔 ${msg}</div>`;
-      setTimeout(() => (box.innerHTML = ''), 3000);
-    }
-
-    function save() {
-      localStorage.setItem('posts', JSON.stringify(posts));
-      localStorage.setItem('currentUser', currentUser || '');
-      localStorage.setItem('selectedSubject', selectedSubject);
-    }
-
-    function renderLogin() {
-      const area = document.getElementById('loginArea');
-      if (currentUser) {
-        area.innerHTML = `👋 สวัสดี, ${currentUser} <button onclick="logout()">ออกจากระบบ</button>`;
-      } else {
-        area.innerHTML = `
-          <input type="text" id="username" placeholder="ชื่อผู้ใช้">
-          <button onclick="login()">เข้าสู่ระบบ</button>
-        `;
-      }
-    }
-
-    function login() {
-      const name = document.getElementById('username').value.trim();
-      if (name) {
-        currentUser = name;
-        save();
-        renderAll();
-        notify(`ยินดีต้อนรับ ${name}!`);
-      }
-    }
-
-    function logout() {
-      currentUser = null;
-      save();
-      renderAll();
-    }
-
-    function renderTabs() {
-      const el = document.getElementById('tabs');
-      if (!currentUser) return (el.innerHTML = '');
-      const subjects = ['ทั่วไป', 'คณิต', 'วิทย์', 'อังกฤษ', 'สังคม'];
-      el.innerHTML = `<div class="tabs">${subjects
-        .map(
-          (s) => `<button class="${s === selectedSubject ? 'active' : ''}" onclick="selectSubject('${s}')">${s}</button>`
-        )
-        .join('')}</div>`;
-    }
-
-    function selectSubject(subj) {
-      selectedSubject = subj;
-      save();
-      renderAll();
-    }
-
-    function renderForm() {
-      const el = document.getElementById('formArea');
-      if (!currentUser) return (el.innerHTML = '');
-      el.innerHTML = `
-        <textarea id="postContent" placeholder="โพสต์การบ้านของคุณ..."></textarea>
-        <button class="submit" onclick="addPost()">โพสต์เลย!</button>
-      `;
-    }
-
-    function addPost() {
-      const content = document.getElementById('postContent').value.trim();
-      if (content) {
-        posts.unshift({
-          subject: selectedSubject,
-          content,
-          user: currentUser,
-          timestamp: new Date().toLocaleString(),
-          likes: 0,
-          comments: [],
-          createdAt: new Date().toISOString()
-        });
-        save();
-        renderAll();
-        notify('📌 โพสต์ของคุณถูกบันทึกแล้ว!');
-      }
-    }
-
-    function likePost(i) {
-      posts[i].likes++;
-      save();
-      renderPosts();
-    }
-
-    function addComment(i, input) {
-      const txt = input.value.trim();
-      if (txt) {
-        posts[i].comments.push(`${currentUser}: ${txt}`);
-        input.value = '';
-        save();
-        renderPosts();
-        notify('💬 มีความคิดเห็นใหม่');
-      }
-    }
-
-    function renderPosts() {
-      const el = document.getElementById('posts');
-      el.innerHTML = '';
-      const filtered = posts.filter(p => p.subject === selectedSubject);
-      const sortBy = document.getElementById('sortBy').value;
-
-      if (sortBy === 'likes') {
-        filtered.sort((a, b) => b.likes - a.likes);
-      } else if (sortBy === 'user') {
-        filtered.sort((a, b) => a.user.localeCompare(b.user));
-      } else {
-        filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      }
-
-      if (filtered.length > 0) {
-        el.innerHTML += `<div class="section-title">${selectedSubject}</div>`;
-        filtered.forEach((p, i) => {
-          el.innerHTML += `
-            <div class="card">
-              <div><strong>${p.user}</strong> | ${p.timestamp} | <em>${p.subject}</em></div>
-              <p style="margin: 10px 0;">${p.content}</p>
-              <div>❤️ ${p.likes} <button onclick="likePost(${posts.indexOf(p)})">ไลก์</button></div>
-              <div class="comment-box">
-                💬 ความคิดเห็น:
-                <ul>${p.comments.map((c) => `<li>${c}</li>`).join('')}</ul>
-                <input placeholder="เพิ่มความคิดเห็น..." onkeydown="if(event.key==='Enter'){addComment(${posts.indexOf(p)}, this)}">
-              </div>
-            </div>
-          `;
-        });
-      }
-    }
-
-    function renderAll() {
-      renderLogin();
-      renderTabs();
-      renderForm();
-      renderPosts();
-    }
-
-    renderAll();
-  </script>
 </body>
 </html>
