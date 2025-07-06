@@ -44,10 +44,14 @@
     button:hover {
       background-color: #059669;
     }
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
     .tabs button {
-      width: auto;
       padding: 0.5rem 1rem;
-      margin: 0.25rem;
       border: 1px solid #ccc;
       background: white;
       border-radius: 8px;
@@ -64,6 +68,9 @@
       align-items: center;
       margin-bottom: 1rem;
     }
+    #loginPage, #mainPage {
+      display: none;
+    }
   </style>
   <!-- Firebase SDK -->
   <script type="module">
@@ -73,12 +80,12 @@
 
     const firebaseConfig = {
       apiKey: "AIzaSyDsv1CFdagjEBwe6WZIIQEbugG7Q5-t9vs",
-      authDomain: "chxos-c5bb3.firebaseapp.com",
-      databaseURL: "https://chxos-c5bb3-default-rtdb.firebaseio.com",
-      projectId: "chxos-c5bb3",
-      storageBucket: "chxos-c5bb3.firebasestorage.app",
-      messagingSenderId: "1087169428011",
-      appId: "1:1087169428011:web:0c8ce9419baa7b15abc86e"
+      authDomain: "your-project-id.firebaseapp.com",
+      databaseURL: "https://your-project-id.firebaseio.com",
+      projectId: "your-project-id",
+      storageBucket: "your-project-id.appspot.com",
+      messagingSenderId: "your-messaging-sender-id",
+      appId: "your-app-id"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -89,20 +96,13 @@
     let currentUser = null;
     let selectedSubject = 'ทั่วไป';
 
-    function renderLogin(user) {
-      const area = document.getElementById('loginArea');
-      if (user) {
-        area.innerHTML = `👋 ยินดีต้อนรับ, ${user.displayName} <button onclick="logout()">ออกจากระบบ</button>`;
-      } else {
-        area.innerHTML = `<button onclick="login()">เข้าสู่ระบบด้วย Google</button>`;
-      }
-    }
-
-    window.login = () => signInWithPopup(auth, provider);
+    window.login = () => signInWithPopup(auth, provider).catch(console.error);
     window.logout = () => signOut(auth);
 
     onAuthStateChanged(auth, (user) => {
       currentUser = user;
+      document.getElementById('loginPage').style.display = user ? 'none' : 'block';
+      document.getElementById('mainPage').style.display = user ? 'block' : 'none';
       renderAll();
     });
 
@@ -144,7 +144,7 @@
     };
 
     function renderAll() {
-      renderLogin(currentUser);
+      if (!currentUser) return;
       renderTabs();
       renderForm();
       renderPosts();
@@ -158,7 +158,6 @@
 
     function renderForm() {
       const el = document.getElementById('formArea');
-      if (!currentUser) return el.innerHTML = '';
       el.innerHTML = `
         <textarea id="postContent" placeholder="โพสต์การบ้านของคุณ..."></textarea>
         <button onclick="addPost()">โพสต์เลย!</button>
@@ -194,10 +193,22 @@
     <header>
       <h1>📘 แชร์การบ้าน & ติวกันเถอะ!</h1>
     </header>
-    <div class="topbar" id="loginArea"></div>
-    <div id="tabs"></div>
-    <div id="formArea"></div>
-    <div id="posts"></div>
+
+    <div id="loginPage">
+      <p>เข้าสู่ระบบเพื่อเริ่มใช้งาน</p>
+      <button onclick="login()">🔐 เข้าสู่ระบบด้วย Google</button>
+    </div>
+
+    <div id="mainPage">
+      <div class="topbar">
+        <div id="loginArea">
+          <button onclick="logout()">ออกจากระบบ</button>
+        </div>
+      </div>
+      <div id="tabs"></div>
+      <div id="formArea"></div>
+      <div id="posts"></div>
+    </div>
   </div>
 </body>
 </html>
