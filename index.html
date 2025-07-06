@@ -76,7 +76,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
     import { getDatabase, ref, push, onValue, set } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, browserPopupRedirectResolver } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDsv1CFdagjEBwe6WZIIQEbugG7Q5-t9vs",
@@ -96,7 +96,14 @@
     let currentUser = null;
     let selectedSubject = 'ทั่วไป';
 
-    window.login = () => signInWithPopup(auth, provider).catch(console.error);
+    window.login = () => {
+      signInWithPopup(auth, provider, browserPopupRedirectResolver)
+        .catch(error => {
+          console.error('Login error', error);
+          alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบ: ' + error.message);
+        });
+    };
+
     window.logout = () => signOut(auth);
 
     onAuthStateChanged(auth, (user) => {
